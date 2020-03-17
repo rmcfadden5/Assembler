@@ -1,0 +1,120 @@
+%include "asm_io.inc" 
+;Ryan McFadden
+
+
+segment .data
+
+	; put initialized data here
+	prompt1		db "Please enter th amount of cable per room:",0
+	prompt2		db "Please enter the number of rooms: ",0
+	outmsg1     db "Feet of Cable: ",0
+	outmsg2     db "Workers: ",0
+	outmsg3     db "Total Cost: ",0
+	ftperwork   dd  50
+	workpercab  db  2
+
+segment .bss
+	
+	; put uninitialized data here
+	input1		resd 1
+	input2		resd 1
+	ftofcab     resd 1
+	numworker   resd 1
+
+segment .text
+	global asm_main 
+	
+asm_main:
+	enter		0,0 	
+	pusha
+
+	; put the code of the main program here
+	mov			eax,prompt1
+	call		print_string
+	call		read_int
+	
+	mov			[input1],eax
+	
+	mov			eax,prompt2
+	call		print_string
+	call		read_int
+	
+	mov			[input2],eax
+	
+	
+	mov eax,[input1]
+	mov edx,[input2]
+	mul edx
+	mov [ebx],eax
+	
+	;print
+	
+	mov eax,outmsg1
+	call print_string
+	
+	mov eax,[ebx]
+	call print_int
+	call print_nl
+	
+	mov [ftofcab],eax
+	
+	xor eax,eax
+	
+	;now find the number of workers
+	;for every 50 feet 2 workers
+	
+	mov  eax,[ftofcab]
+	mov  ecx,[ftperwork]
+	div  ecx
+	mov  [ebx],eax
+	
+	mov  eax,[workpercab]
+	mov  edx,[ebx]
+	mul  edx
+	mov  [ebx],eax
+	
+	;now print out number of workers
+	
+	mov eax,outmsg2
+	call print_nl
+	call print_string
+	
+	mov eax,[ebx]
+	call print_int
+	call print_nl
+	
+	mov [numworker],eax
+	xor ecx,ecx
+	
+	;now find the total cost
+	;$2 per feet of cable, $32 per worker
+	
+	mov eax,[workpercab]
+	mov edx,[ftofcab]
+	mul edx
+	mov [ebx],eax
+	
+	add ecx,[ebx]
+	
+	mov eax,32
+	mov edx,[numworker]
+	mul edx
+	mov [ebx],eax
+	
+	add ecx,[ebx]
+	mov [ebx],ecx
+	
+	;Now print total cost
+	
+	mov eax,outmsg3
+	call print_nl
+	call print_string
+	
+	mov eax,[ebx]
+	call print_int
+	call print_nl
+	
+	popa
+	mov			eax,0 	
+	leave
+	ret
