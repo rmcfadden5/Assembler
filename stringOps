@@ -1,0 +1,295 @@
+%define STRING_SIZE 10
+segment .data 
+	prompt1     db "Enter a string: ",10,0
+	prompt2     db "Enter another string: ",10,0
+	input       db "%s",0
+	str1        db "String 1: ",0
+	str2        db "String 2: ",0
+	eqres1      db " is equal to ",0
+	eqres2      db " does not equal ",0
+	copying     db "Copying String 1 over String 2",10,0
+	substring   db "Making String2 a substring of String1",10,0
+	letter      db "Returning the First Letter of substring",10,0
+	firstsub    db "The first letter of the substring is ",0
+	reverse     db "Reversing String 1",0
+	reversed    db "String 1 reversed is: ",0
+	str1is      db "String 1 is ",0
+	str2is      db " and String 2 is ",0
+	newline     db "",10,0
+	empty       db " ",0
+
+segment .bss
+	string1     resb STRING_SIZE
+	string2     resb STRING_SIZE
+	string3     resb STRING_SIZE
+
+segment .text
+	global asm_main
+	extern printf,scanf
+asm_main:
+	enter   0,0
+	pusha
+	
+	; Get the two strings from the user
+	; strings end at the first whitespace (newline or space) character
+	push    prompt1     ; Prompt the user for the first string
+	call    printf
+	add     esp,4
+	push    string1     ; Capture the first string
+	push    input
+	call    scanf
+	add     esp,8
+	push    prompt2     ; Prompt the user for the second string
+	call    printf
+	add     esp,4
+	push    string2     ; Capture the second string
+	push    input
+	call    scanf
+	add     esp,8
+	
+	                   ;Print out the strings
+	push    str1
+	call    printf
+	push    string1
+	call    printf
+	push    newline
+	call    printf
+	add     esp,12
+	push    str2
+	call    printf
+	push    string2
+	call    printf
+	push    newline
+	call    printf
+	add     esp,12
+  
+	                    ; call equal program
+	push    string2     ; call equal(string1, string2)
+	push    string1
+	call    equal
+	add     esp,8       ; remove 8 bytes from the stack
+
+	                    ; use result of equal program
+	cmp     al,1        ; if al == 1 return same, else return different
+	je      same  
+	push    string1
+	call    printf 
+	push    eqres2     ; output that strings are different
+	call    printf
+	push    string2
+	call    printf
+	push    newline
+	call    printf
+	add     esp,16   
+	jmp     next
+same:
+    push    string1
+    call    printf
+	push    eqres1      ; output that strings are the same
+	call    printf
+	push    string2
+	call    printf
+	push    newline
+	call    printf
+	add     esp,16
+next:
+
+                        ; Copy program
+    call    copy
+
+                        ; Substring Program
+    call    substringprog
+    
+                        ;Return first sub letter
+    call    firstsubletter
+    
+                        ;Reverse String1
+    call    reversestring
+    
+leave
+xor     eax,eax
+ret
+ 
+; checks whether two strings are equal. returns 1 if true, 0 otherwise 
+equal:
+	enter   0,0
+	push    esi         ; push these esi,edi,ebx to preserve their values
+	push    edi
+	push    ebx
+
+	xor     eax,eax
+	mov     esi,[ebp+8]     ; esi = string1
+	mov     edi,[ebp+12]    ; edi = string2
+	mov     ecx,10          ; ecx = 10  
+	repe    cmpsb           ; compare esi and edi until they are different, or ecx is 0
+	setz    al              ; al = 1, if equal. al = 0, if strings are different
+
+	pop     ebx             ; pop ebx,edi,esi to restore their original values
+	pop     edi
+	pop     esi
+	leave
+	ret
+	
+                       ;Copy String1 to String2 SubProgram
+copy:
+    enter 0,0
+    push    esi        ; push these esi,edi,ebx to preserve their values
+	push    edi
+	push    ebx
+
+	                   ;Print copying message
+	push    copying
+	call    printf
+	add     esp,4      
+	      
+                        ;Copy Looop
+    mov     edi,string2
+    mov     esi,string1
+    cld
+  copy_loop:
+    lodsb
+    stosb
+    or      al,al
+    jnz     copy_loop
+                      
+    push    str1is           ;Print out the value
+    call    printf
+    push    string1
+    call    printf
+    push    str2is
+    call    printf
+    push    string2
+    call    printf
+    push    newline
+    call    printf
+    add     esp,20
+	        
+	pop     ebx     ; pop ebx,edi,esi to restore their original values
+	pop     edi
+	pop     esi
+	leave
+	ret
+	
+substringprog:                  ;The Substring SubProgram
+    enter 0,0
+    	
+	push    esi       ; push these esi,edi,ebx to preserve their values
+	push    edi
+	push    ebx
+	
+	push    substring
+	call    printf
+	add     esp,4
+	
+	                  ;Extract Substring out of string1
+    
+	mov     esi,string1+1
+	mov     edi,string2
+	cld
+	lodsb
+	stosb
+	
+	mov     esi,empty
+    mov     edi,string2
+    cld
+    lodsb
+    stosb
+	
+	                   ;Print out String 1 and new String2
+	push    str1is
+	call    printf
+	push    string1
+	call    printf
+	push    str2is
+	call    printf
+	push    string2
+	call    printf
+	push    newline
+	call    printf
+	add     esp,20
+	
+    pop     ebx      ; pop ebx,edi,esi to restore their original values
+	pop     edi
+	pop     esi
+	leave
+	ret
+	
+	                 ;Now write the last letter program
+firstsubletter:
+    enter   0,0
+    
+    push    esi       ; push these esi,edi,ebx to preserve their values
+	push    edi
+	push    ebx
+	
+	push    letter
+	call    printf
+	add     esp,4
+	
+	mov     esi,string2+1
+	mov     edi,string2
+	cld
+	lodsb
+	stosb
+	
+	mov     esi,empty
+	mov     edi,string2+1
+	cld
+	lodsb
+	lodsb
+	stosb
+	
+	push    firstsub
+	call    printf
+	push    string2
+	call    printf
+	push    newline
+	call    printf
+	add     esp,12
+	
+	pop     ebx      ; pop ebx,edi,esi to restore their original values
+	pop     edi
+	pop     esi
+	leave
+	ret
+	
+reversestring:
+    enter   0,0
+    
+    push    esi       ; push these esi,edi,ebx to preserve their values
+	push    edi
+	push    ebx
+	
+	push    reverse
+	call    printf
+	push    newline
+	call    printf
+	add     esp,8
+	
+	mov     esi,string1
+	mov     edi,string2
+	cld
+	lodsb
+	stosb
+	
+	
+	mov     esi,string2
+	mov     edi,string1+STRING_SIZE
+	std
+	lodsb
+	stosb
+	
+	
+	push    reversed
+	call    printf
+	push    string1
+	call    printf
+	push    newline
+	call    printf
+	add     esp,12
+	
+    pop     ebx      ; pop ebx,edi,esi to restore their original values
+	pop     edi
+	pop     esi
+	leave
+	ret
