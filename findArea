@@ -1,0 +1,329 @@
+%include "asm_io.inc"  ; %include "io.inc" on SASM
+
+section .data
+	pOctPrism   db "Please enter the base edge of the Oct prism: ",0
+    pHexPrism       db "Please enter the length of the sides of the Hexagonal Prism: ",0
+	pHexHeight  db "Please enter the height of the Hexagonal Prism: ",0
+	pCylHeight  db "Please enter the height of the Cylinder: ",0
+	pTrapHeight db "Please enter the height of the Trapezoid: ",0
+	pOctHeight  db "Please enter the height of the Octagonal Prism: ",0
+	pCylRad     db "Please enter the radius of the Cylinder: ",0
+	pApothem    db "Enter the apothem length of the Hex Prism: ",0
+	pTBase1     db "Enter length of base 1 of Trapezoid: ",0
+	pTBase2     db "Enter length of base 2 of Trapezoid: ",0
+	hexArea     db ".....The surface area of the Hexagonal prism is: %.2lf",10,10,0
+	cylArea     db ".....The surface area of the Cylinder is: %.2lf",10,10,0
+	trapArea    db ".....The surface area of the Trapezoid is: %.2lf",10,10,0
+	octArea     db ".....The surface area of the Octagonal Prism is: %.2lf",10,10,0
+	
+	inpFloat	db "%f",0
+	inp2Float   db "%f",0
+	inpDouble	db "%lf",0
+	PI		    dd 3.14159
+
+section .bss
+	sFloat		resd 1		; length of side as float
+	sDouble		resq 1		; length of side as double
+	resFloat	resd 1		; result as a Float
+	resDouble	resq 1		; result as a Double
+	
+	heiDouble   resq 1		; height
+	base1Double  resq 1      ; base 1
+	base2Double  resq 1      ; base 2
+	baseEdge    resd 1       ; base Edge Float
+	heiFloat    resd 1       ; height Float
+	rDouble		resq 1      ; radius
+	aDouble     resq 1      ; length of apothem as double
+
+section .text
+	global asm_main 	; asm_main on linux, CMAIN on SASM
+	extern printf,scanf
+
+asm_main:
+	enter 	0,0
+
+	; prompt the user for the height of the hex prism, and then capture the input as a double
+	push		pHexHeight
+	call		printf
+	add		esp,4
+	push		heiDouble
+	push		inpDouble
+	call		scanf
+	add		esp,8
+	
+	; prompt the user for the length of the hex prism, and then capture the input as a double
+	push		pHexPrism
+	call		printf
+	add		esp,4
+	push		sDouble
+	push		inpDouble
+	call		scanf
+	add		esp,8
+	
+	; prompt the user for the apothem of the hex prism
+	push		pApothem
+	call		printf
+	add		esp,4
+	push		aDouble
+	push		inpDouble
+	call		scanf
+	add		esp,8
+	
+	; Double hexagonal(double side double height);
+	push        dword[aDouble+4]
+	push        dword[aDouble]
+	push        dword[sDouble+4]
+	push		dword[sDouble]
+	push        dword[heiDouble+4]
+	push        dword[heiDouble]
+	
+	call		hexagonal
+	add		esp,4
+	fstp		qword[resDouble	]	; resDouble = ST0
+	
+	; print the area of the hexPrism
+	push		dword[resDouble+4]	; pushing qword[resDouble]
+	push		dword[resDouble]
+	push		hexArea
+	call		printf
+	add		esp,28
+	
+	
+	; prompt the user for the height of the Cylinder
+	push		pCylHeight
+	call		printf
+	add		esp,4
+	push		heiDouble
+	push		inpDouble
+	call		scanf
+	add		esp,8
+	
+	; prompt the user for the radius of the Cylinder
+	push		pCylRad
+	call		printf
+	add		esp,4
+	push		rDouble
+	push		inpDouble
+	call		scanf
+	add		esp,8
+	
+	; Double Cylinder(double radius double height);
+	push        dword[rDouble+4]
+	push		dword[rDouble]
+	push        dword[heiDouble+4]
+	push        dword[heiDouble]
+	
+	call		cylinder
+	add		esp,4
+	fstp		qword[resDouble	]	; resDouble = ST0
+	
+	; print the area of the cylinder
+	push		dword[resDouble+4]	; pushing qword[resDouble]
+	push		dword[resDouble]
+	push		cylArea
+	call		printf
+	add		esp,28
+	
+	
+	; prompt the user for the height of the Trapezoid
+	push		pTrapHeight
+	call		printf
+	add		esp,4
+	push		heiDouble
+	push		inpDouble
+	call		scanf
+	add		esp,8
+	
+	; prompt the user for the base1 of the Trapezoid
+	push		pTBase1
+	call		printf
+	add		esp,4
+	push		base1Double
+	push		inpDouble
+	call		scanf
+	add		esp,8
+	
+	; prompt the user for the base2 of the Trapezoid
+	push		pTBase2
+	call		printf
+	add		esp,4
+	push		base2Double
+	push		inpDouble
+	call		scanf
+	add		esp,8
+	
+	; Double Trapezoid(double base1 double base2 double height);
+	push        dword[base1Double+4]
+	push		dword[base1Double]
+	push        dword[base2Double+4]
+	push        dword[base2Double]
+	push        dword[heiDouble+4]
+	push        dword[heiDouble]
+	
+	call		trapezoid
+	add		esp,4
+	fstp		qword[resDouble	]	; resDouble = ST0
+	
+	; print the area of the trapezoid
+	push		dword[resDouble+4]	; pushing qword[resDouble]
+	push		dword[resDouble]
+	push		trapArea
+	call		printf
+	add		esp,28
+	
+	
+	; prompt the user for the height of the Octagonal Prism
+	push		pOctHeight
+	call		printf
+	add		esp,4
+	push		heiFloat
+	push		inpFloat
+	call		scanf
+	add		esp,8
+	
+	; prompt the user for the base edge of the Octagonal Prism
+	push		pOctPrism
+	call		printf
+	add		esp,4
+	push		baseEdge
+	push		inp2Float
+	call		scanf
+	add		esp,8
+	
+	; Float Octagonal Prism(Float base edge Float height);
+	push        dword[baseEdge]
+	push        dword[heiFloat]
+	
+	call		octagonal
+	add		esp,4
+	fstp		dword[resFloat	]	; resFloat = ST0
+	
+	fld		dword[resFloat]
+	fstp	qword[resDouble]
+	
+	push		dword[resDouble+4]	; pushing qword[resDouble]
+	push		dword[resDouble]
+	push		octArea
+	call		printf
+	add	  	esp,20
+	
+	leave
+	xor		eax,eax
+	ret
+	
+	
+; double cylinder(double radius, double height);
+cylinder:
+	enter 		0,0
+	; ebp+8 = radius
+	; ebp+16 = height
+	
+	fld 	    qword[ebp+16]	        ; ST0 = radius
+	fld			qword[ebp+16] 	        ; ST1 = radius; ST0 = radius
+	fmulp		st1				        ; ST0 = r squared
+	fld 		dword[PI]	    	    ; ST1 = r^2; ST0 = PI
+	fmulp       st1                     ; ST0 = piRsquared
+	mov         [ebp-8],dword 2
+	fild        dword[ebp-8]            ; ST0 = 2
+	fmulp       st1                     ; ST0 = 2piRsquared
+	
+	fld         qword[ebp+8]           ; ST0 = height
+	fld         qword[ebp+16]            ; ST1 = height ST0 = radius
+	fmulp       st1                     ; ST1 // ST0 = hr
+	fld         dword[PI]            ; ST1 = hr ST0 = PI
+	fmulp       st1                     ; ST1 = // ST0 = PIhr
+	fild        dword[ebp-8]            ; ST0 = 2
+	fmulp       st1
+	
+	faddp       st1
+	
+	leave
+	ret
+	
+; double hexagonalPrism(double s, double height);
+hexagonal:
+	enter 0,0
+	; ebp+8 = height
+	; ebp+16 = side
+	; ebp+24 = apothem
+	
+	fld		qword[ebp+8]		    ; ST0 = height
+	fld     qword[ebp+24]           ; ST1 = apothem
+	faddp   st1                     ; ST0 = a + h
+	
+	mov     [ebp-4],dword 6         ; ebp-4 = 6
+	fild     dword[ebp-4]           ; ST1 = a+h ST0 = 6
+	fld     qword[ebp+16]           ; ST0 = side
+	fmulp    st1                    ; ST0 = 6s
+	
+	fmulp    st1                    ; ST0 = SA
+					
+	
+	; return area in ST0
+	
+	leave
+	ret
+	
+	; double trapezoid(double base1, base2 double height);
+trapezoid:
+	enter 0,0
+	; ebp+8 = height
+	; ebp+16 = base2
+	; ebp+24 = base1
+	
+	fld		qword[ebp+16]		    ; ST0 = base2
+	fld     qword[ebp+24]           ; ST1 = base1
+	faddp   st1                     ; ST0 = b1 + b2
+	
+	mov     [ebp-4],dword 2 
+	fild    dword[ebp-4]            ; ST0 = 2
+	fdivp   st1,st0                 ; ST0 = (b1+b2)/2
+	
+	fld     qword[ebp+8]
+	fmulp   st1				
+	
+	; return area in ST0
+	
+	leave
+	ret
+
+
+    	; float octagonal(float baseEdge float height);
+octagonal:
+	 enter 0,0
+	; ebp+8 =  height
+	; ebp+12 = baseEdge
+	
+    
+	mov     [ebp-4],dword 2
+	fild    dword[ebp-4]
+	fsqrt    
+
+	mov     [ebp-8],dword 1
+	fild    dword[ebp-8]
+	
+	faddp   st1                    ; ST0 = 1+sqrt(2)
+	mov     [ebp-12],dword 4
+	fild    dword[ebp-12]
+	fmulp   st1                    ; ST0 = 4(1+sqrt(2))
+	
+	fld		dword[ebp+12]		    ; ST0 = baseEdge
+	fld     dword[ebp+12]           ; ST1 = baseEdge
+	fmulp   st1                     ; ST0 = baseEdge squared
+	
+	fmulp   st1                    ; ST0 = 4(1 + sqrt(2) * asquared
+	
+	mov     [ebp-12],dword 8
+	fild    dword[ebp-12]          ; ST1 = // ST0 = 8
+	fld     dword[ebp+12]           ; ST2 = // ST1 = 8 ST0 = baseEdge
+	fmulp   st1                    ; ST1 = // ST0 = 8*baseEdge
+	
+	fld     dword[ebp+8]
+	fmulp   st1
+	
+	faddp   st1
+	
+	; return area in ST0
+	
+	leave
+	ret
